@@ -17,15 +17,15 @@ type Snapshot struct {
 	Taken    time.Time `json:"taken"`
 	Elevated bool      `json:"elevated"`
 
-	System      SystemInfo      `json:"system"`
-	Security    SecurityPosture `json:"security"`
-	Users       []UserAccount   `json:"users"`
-	Processes   []Process       `json:"processes"`
-	Connections []Connection    `json:"connections"`
-	Services    []Service       `json:"services"`
-	Tasks       []Task          `json:"tasks"`
-	Autoruns    []Autorun       `json:"autoruns"`
-	Files       []FileEntry     `json:"files"`
+	System      SystemInfo              `json:"system"`
+	Security    SecurityPosture         `json:"security"`
+	Users       []UserAccount           `json:"users"`
+	Processes   []Process               `json:"processes"`
+	Connections []Connection            `json:"connections"`
+	Services    []Service               `json:"services"`
+	Tasks       []Task                  `json:"tasks"`
+	Autoruns    []Autorun               `json:"autoruns"`
+	Files       []FileEntry             `json:"files"`
 	DNS         []winsys.DNSCacheRecord `json:"dns_cache"`
 
 	// Notes records collection problems (access denied, API failures) so the

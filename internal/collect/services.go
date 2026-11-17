@@ -21,8 +21,8 @@ type Service struct {
 	PID         uint32 `json:"pid,omitempty"`
 	Account     string `json:"account,omitempty"`
 
-	ImagePath  string `json:"image_path"`            // raw registry value
-	Binary     string `json:"binary"`                // resolved program
+	ImagePath  string `json:"image_path"` // raw registry value
+	Binary     string `json:"binary"`     // resolved program
 	Args       string `json:"args,omitempty"`
 	ServiceDLL string `json:"service_dll,omitempty"` // for svchost-hosted services
 

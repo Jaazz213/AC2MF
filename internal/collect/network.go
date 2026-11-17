@@ -56,16 +56,16 @@ var (
 )
 
 const (
-	afInet               = 2
-	afInet6              = 23
-	tcpTableOwnerPIDAll  = 5
-	udpTableOwnerPID     = 1
-	errInsufficientBuf   = 122
-	tcpStateListen       = 2
-	scopeListen          = "listen"
-	scopeLoopback        = "loopback"
-	scopePrivate         = "private"
-	scopePublic          = "public"
+	afInet              = 2
+	afInet6             = 23
+	tcpTableOwnerPIDAll = 5
+	udpTableOwnerPID    = 1
+	errInsufficientBuf  = 122
+	tcpStateListen      = 2
+	scopeListen         = "listen"
+	scopeLoopback       = "loopback"
+	scopePrivate        = "private"
+	scopePublic         = "public"
 )
 
 var tcpStates = map[uint32]string{

@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	modDnsapi                 = windows.NewLazySystemDLL("dnsapi.dll")
-	procDnsGetCacheDataTable  = modDnsapi.NewProc("DnsGetCacheDataTable")
-	dnsQueryNoWireQuery       = uint32(0x10) // answer from the local cache only, never send a packet
-	dnsTypeA           uint16 = 1
-	dnsTypeAAAA        uint16 = 28
+	modDnsapi                       = windows.NewLazySystemDLL("dnsapi.dll")
+	procDnsGetCacheDataTable        = modDnsapi.NewProc("DnsGetCacheDataTable")
+	dnsQueryNoWireQuery             = uint32(0x10) // answer from the local cache only, never send a packet
+	dnsTypeA                 uint16 = 1
+	dnsTypeAAAA              uint16 = 28
 )
 
 // DNS_CACHE_ENTRY as returned by the (undocumented but long-stable)
