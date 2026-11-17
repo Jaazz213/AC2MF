@@ -37,10 +37,7 @@ func EnableDebugPrivilege() bool {
 	}
 	tp := windows.Tokenprivileges{PrivilegeCount: 1}
 	tp.Privileges[0] = windows.LUIDAndAttributes{Luid: luid, Attributes: windows.SE_PRIVILEGE_ENABLED}
-	if err := windows.AdjustTokenPrivileges(token, false, &tp, 0, nil, nil); err != nil {
-		return false
-	}
-	return windows.GetLastError() == nil
+	return windows.AdjustTokenPrivileges(token, false, &tp, 0, nil, nil) == nil
 }
 
 // RelaunchElevated starts a second, elevated copy of this executable with the

@@ -279,9 +279,8 @@ type sigCacheEntry struct {
 }
 
 var (
-	sigCache   sync.Map // lower-case path -> sigCacheEntry
-	catCache   sync.Map // lower-case catalog path -> Signature
-	selfVerify sync.Map // in-flight de-duplication is not worth the complexity; the cache is enough
+	sigCache sync.Map // lower-case path -> sigCacheEntry
+	catCache sync.Map // lower-case catalog path -> Signature
 )
 
 // Verify checks a file's embedded signature and, failing that, the Windows
