@@ -71,7 +71,10 @@ func collectSystem(s *Snapshot) string {
 
 	info.BootTime = time.Now().Add(-windows.DurationSinceBoot()).Truncate(time.Second)
 	zone, offset := time.Now().Zone()
-	info.TimeZone = fmt.Sprintf("%s (UTC%+d)", zone, offset/3600)
+	info.TimeZone = fmt.Sprintf("UTC%+d", offset/3600)
+	if zone != "" && zone[0] != '+' && zone[0] != '-' {
+		info.TimeZone = fmt.Sprintf("%s (UTC%+d)", zone, offset/3600)
+	}
 
 	info.Manufacturer = regString(registry.LOCAL_MACHINE, `HARDWARE\DESCRIPTION\System\BIOS`, "SystemManufacturer")
 	info.Model = regString(registry.LOCAL_MACHINE, `HARDWARE\DESCRIPTION\System\BIOS`, "SystemProductName")

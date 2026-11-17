@@ -46,6 +46,12 @@ func (c *autorunCollector) add(a Autorun) {
 	if a.Target == "" {
 		a.Target, a.Args = winsys.SplitCommandLine(a.Command)
 	}
+	// An entry that points at a shortcut really starts the shortcut's target.
+	if strings.EqualFold(filepath.Ext(a.Target), ".lnk") && a.Kind != "Startup folder" {
+		if target, args := resolveShortcut(a.Target); target != "" {
+			a.Target, a.Args = target, strings.TrimSpace(args+" "+a.Args)
+		}
+	}
 	c.out = append(c.out, a)
 }
 

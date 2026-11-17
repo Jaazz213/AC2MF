@@ -49,10 +49,27 @@ type SecurityPosture struct {
 // AVProduct is an antivirus registered with Windows Security Center.
 type AVProduct struct {
 	Name     string `json:"name"`
-	Enabled  bool   `json:"enabled"`
+	State    string `json:"state"` // on, off, snoozed, expired - as reported by Security Center
 	UpToDate bool   `json:"up_to_date"`
 	Path     string `json:"path,omitempty"`
 }
+
+// Active reports whether Security Center considers the product to be protecting the machine.
+func (a AVProduct) Active() bool { return a.State == On }
+
+// ActiveAV reports whether at least one registered antivirus is switched on.
+// When Security Center has no data (Server editions) it falls back to the
+// Defender real-time flag.
+func (p SecurityPosture) ActiveAV() bool {
+	for _, a := range p.Antivirus {
+		if a.Active() {
+			return true
+		}
+	}
+	return len(p.Antivirus) == 0 && p.DefenderRealtime == On
+}
+
+var avStates = map[int64]string{0: Off, 1: On, 2: "snoozed", 3: "expired"}
 
 // HostsEntry is a non-comment line of the hosts file.
 type HostsEntry struct {
@@ -78,10 +95,11 @@ func collectSecurity(s *Snapshot) string {
 	// --- Antivirus products (Security Center; absent on Server SKUs) ---
 	err := wmiQuery(`root\SecurityCenter2`, "SELECT * FROM AntiVirusProduct", func(item *ole.IDispatch) {
 		state := comInt(item, "productState")
+		// productState packs three bytes: provider, scanner state, definitions.
 		p.Antivirus = append(p.Antivirus, AVProduct{
 			Name:     comString(item, "displayName"),
-			Enabled:  state&0x1000 != 0,
-			UpToDate: state&0x10 == 0,
+			State:    avStates[(state>>12)&0xF],
+			UpToDate: state&0xF0 == 0,
 			Path:     comString(item, "pathToSignedProductExe"),
 		})
 	})
@@ -168,15 +186,22 @@ func collectSecurity(s *Snapshot) string {
 
 	p.Hosts = readHosts()
 
-	av := "no antivirus registered"
-	if len(p.Antivirus) > 0 {
-		names := make([]string, 0, len(p.Antivirus))
-		for _, a := range p.Antivirus {
-			names = append(names, a.Name)
+	// When another product has taken over, Security Center marks Defender
+	// as off even though its registry switch still reads "enabled".
+	for _, a := range p.Antivirus {
+		if strings.Contains(strings.ToLower(a.Name), "defender") && p.DefenderRealtime == On && !a.Active() {
+			p.DefenderRealtime = "passive"
 		}
-		av = strings.Join(names, ", ")
 	}
-	return fmt.Sprintf("%s; Defender real-time %s", av, p.DefenderRealtime)
+
+	if len(p.Antivirus) == 0 {
+		return "no antivirus registered; Defender real-time " + p.DefenderRealtime
+	}
+	parts := make([]string, 0, len(p.Antivirus))
+	for _, a := range p.Antivirus {
+		parts = append(parts, fmt.Sprintf("%s (%s)", a.Name, a.State))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func readHosts() []HostsEntry {

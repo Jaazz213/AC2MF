@@ -325,14 +325,22 @@ func verifyUncached(path string, catalog bool) Signature {
 	case hrOK:
 		return Signature{State: SigValid, Signer: signer}
 	case hrNoSignature, hrSubjectFormUnknown, hrProviderUnknown:
+		// A format Windows cannot sign at all (a shortcut, a text file) is
+		// "not applicable", which must not be reported as "unsigned".
+		none := Signature{State: SigUnsigned}
+		if hr != hrNoSignature {
+			none.State = SigUnknown
+		}
 		if !catalog {
-			return Signature{State: SigUnsigned}
+			return none
 		}
-		cat := catalogFor(path)
-		if cat == "" {
-			return Signature{State: SigUnsigned}
+		if cat := catalogFor(path); cat != "" {
+			return verifyCatalog(cat)
 		}
-		return verifyCatalog(cat)
+		if pkg := packageSignature(path); pkg != "" {
+			return verifyCatalog(pkg)
+		}
+		return none
 	case hrCertExpired:
 		return Signature{State: SigExpired, Signer: signer}
 	case hrFileError, hrAccessDenied, hrSharingViolation:
@@ -340,6 +348,29 @@ func verifyUncached(path string, catalog bool) Signature {
 	default:
 		return Signature{State: SigUntrusted, Signer: signer}
 	}
+}
+
+// packageSignature returns the signature file of the Store (MSIX/AppX)
+// package a file belongs to. Packaged apps are signed as a whole: the
+// binaries inside carry no signature of their own and are not in the system
+// catalogs, but the package directory is only writable by the installer.
+func packageSignature(path string) string {
+	const marker = `\windowsapps\`
+	lower := strings.ToLower(path)
+	i := strings.Index(lower, marker)
+	if i < 0 || !strings.HasPrefix(lower, strings.ToLower(os.Getenv("ProgramFiles"))) {
+		return ""
+	}
+	rest := path[i+len(marker):]
+	j := strings.IndexByte(rest, '\\')
+	if j <= 0 {
+		return ""
+	}
+	p7x := path[:i+len(marker)+j] + `\AppxSignature.p7x`
+	if _, err := os.Stat(p7x); err != nil {
+		return ""
+	}
+	return p7x
 }
 
 func verifyCatalog(cat string) Signature {

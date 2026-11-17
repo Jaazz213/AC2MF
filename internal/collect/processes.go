@@ -143,7 +143,7 @@ func collectProcesses(s *Snapshot) string {
 
 func isKernelPseudoProcess(name string) bool {
 	switch lower(name) {
-	case "system", "registry", "memory compression", "secure system", "vmmem", "vmmemwsl", "[system process]":
+	case "system", "registry", "memory compression", "memcompression", "secure system", "vmmem", "vmmemwsl", "[system process]":
 		return true
 	}
 	return false
@@ -154,7 +154,9 @@ func inspect(p *Process) {
 
 	h, err := windows.OpenProcess(windows.PROCESS_QUERY_LIMITED_INFORMATION, false, p.PID)
 	if err != nil {
-		p.Path = imagePathWithoutHandle(p.PID)
+		if p.Path = imagePathWithoutHandle(p.PID); !strings.ContainsRune(p.Path, '\\') {
+			p.Path = ""
+		}
 		return
 	}
 	defer windows.CloseHandle(h)
@@ -166,6 +168,12 @@ func inspect(p *Process) {
 		p.Path = windows.UTF16ToString(buf[:size])
 	} else {
 		p.Path = imagePathWithoutHandle(p.PID)
+	}
+
+	// Kernel pseudo-processes (Registry, MemCompression, vmmem) report a
+	// bare name instead of a file path.
+	if !strings.ContainsRune(p.Path, '\\') {
+		p.Path = ""
 	}
 
 	p.CommandLine = commandLine(h)
